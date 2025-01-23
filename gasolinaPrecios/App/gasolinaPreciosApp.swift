@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct gasolinaPreciosApp: App {
+    let locationManager = LocationManager()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SplashScreenView()
+                .environmentObject(locationManager)
         }
     }
 }
