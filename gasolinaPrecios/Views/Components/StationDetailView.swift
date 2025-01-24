@@ -4,6 +4,7 @@ import CoreLocation
 struct StationDetailView: View {
     let station: GasStation
     let userLocation: CLLocation?
+    let viewModel: MainViewModel
     @State private var selectedSection = 0
     
     var body: some View {
@@ -11,8 +12,11 @@ struct StationDetailView: View {
             VStack(spacing: 16) {
                 // Mapa mejorado
                 if let coordinates = station.coordinates {
-                    StationMapView(station: station, userLocation: userLocation)
-                        .padding(.horizontal)
+                    SingleStationMapView(
+                        station: station,
+                        userLocation: userLocation
+                    )
+                    .padding(.horizontal)
                 }
                 
                 VStack(spacing: 16) {
@@ -222,6 +226,7 @@ struct ServiceRow: View {
 // MARK: - Preview
 struct StationDetailView_Previews: PreviewProvider {
     static var previews: some View {
+        let locationManager = LocationManager()
         NavigationView {
             StationDetailView(
                 station: GasStation(
@@ -245,7 +250,8 @@ struct StationDetailView_Previews: PreviewProvider {
                     gasoline95E5PremiumPrice: "1.779",
                     gasoline98E5Price: "1.879"
                 ),
-                userLocation: CLLocation(latitude: 40.416775, longitude: -3.703790)
+                userLocation: CLLocation(latitude: 40.416775, longitude: -3.703790),
+                viewModel: MainViewModel(locationManager: locationManager)
             )
         }
     }

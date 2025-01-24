@@ -11,7 +11,7 @@ struct GasStationsResponse: Codable {
     }
 }
 
-struct GasStation: Codable, Identifiable {
+struct GasStation: Codable, Identifiable, Equatable {
     let id = UUID()
     let postalCode: String
     let address: String
@@ -21,6 +21,11 @@ struct GasStation: Codable, Identifiable {
     let longitude: String
     let margin: String
     let municipality: String
+    
+    // Implementación de Equatable
+        static func == (lhs: GasStation, rhs: GasStation) -> Bool {
+            lhs.id == rhs.id
+        }
     
     // Precios
     let biodieselPrice: String?

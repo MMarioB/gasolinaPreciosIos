@@ -10,83 +10,97 @@ struct MainView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(UIColor.systemGroupedBackground)
-                    .ignoresSafeArea()
-                
-                if viewModel.isLoading {
-                    loadingView
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(viewModel.filteredStations) { station in
-                                StationRowView(
-                                    station: station,
-                                    fuelType: viewModel.selectedFuelType,
-                                    userLocation: viewModel.locationManager.location,
-                                    viewModel: viewModel
-                                )
+        TabView {
+            // Lista de gasolineras
+            NavigationView {
+                ZStack {
+                    Color(UIColor.systemGroupedBackground)
+                        .ignoresSafeArea()
+                    
+                    if viewModel.isLoading {
+                        loadingView
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                ForEach(viewModel.filteredStations) { station in
+                                    StationRowView(
+                                        station: station,
+                                        fuelType: viewModel.selectedFuelType,
+                                        userLocation: viewModel.locationManager.location,
+                                        viewModel: viewModel
+                                    )
+                                }
                             }
+                            .padding(.vertical)
                         }
-                        .padding(.vertical)
-                    }
-                    .refreshable {
-                        await viewModel.fetchStations()
-                    }
-                }
-            }
-            .searchable(
-                text: $viewModel.searchText,
-                placement: .navigationBarDrawer(displayMode: .always),
-                prompt: "Buscar por dirección, municipio..."
-            )
-            .navigationTitle("Gasolineras")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Text("Combustible actual")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Button {
-                            showingFuelTypeSelector = true
-                        } label: {
-                            Label(viewModel.selectedFuelType.rawValue, systemImage: "fuelpump.fill")
-                        }
-                    } label: {
-                        Label("Combustible", systemImage: "fuelpump.circle.fill")
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        Task {
+                        .refreshable {
                             await viewModel.fetchStations()
                         }
-                    } label: {
-                        Image(systemName: "arrow.clockwise.circle.fill")
-                            .font(.title3)
                     }
                 }
-            }
-            .sheet(isPresented: $showingFuelTypeSelector) {
-                FuelTypeSelectorView(
-                    selectedFuelType: $viewModel.selectedFuelType,
-                    viewModel: viewModel
+                .searchable(
+                    text: $viewModel.searchText,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Buscar por dirección, municipio..."
                 )
-            }
-            .overlay {
-                if !viewModel.isLoading && viewModel.filteredStations.isEmpty {
-                    if viewModel.searchText.isEmpty {
-                        ContentUnavailableView(
-                            "No hay gasolineras",
-                            systemImage: "fuelpump.slash",
-                            description: Text("Intenta actualizar la lista")
-                        )
-                    } else {
-                        ContentUnavailableView.search
+                .navigationTitle("Gasolineras")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Text("Combustible actual")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Button {
+                                showingFuelTypeSelector = true
+                            } label: {
+                                Label(viewModel.selectedFuelType.rawValue, systemImage: "fuelpump.fill")
+                            }
+                        } label: {
+                            Label("Combustible", systemImage: "fuelpump.circle.fill")
+                        }
+                    }
+                    
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            Task {
+                                await viewModel.fetchStations()
+                            }
+                        } label: {
+                            Image(systemName: "arrow.clockwise.circle.fill")
+                                .font(.title3)
+                        }
                     }
                 }
+                .sheet(isPresented: $showingFuelTypeSelector) {
+                    FuelSelectorView(
+                        selectedFuelType: $viewModel.selectedFuelType,
+                        viewModel: viewModel
+                    )
+                }
+                .overlay {
+                    if !viewModel.isLoading && viewModel.filteredStations.isEmpty {
+                        if viewModel.searchText.isEmpty {
+                            ContentUnavailableView(
+                                "No hay gasolineras",
+                                systemImage: "fuelpump.slash",
+                                description: Text("Intenta actualizar la lista")
+                            )
+                        } else {
+                            ContentUnavailableView.search
+                        }
+                    }
+                }
+            }
+            .tabItem {
+                Label("Lista", systemImage: "list.bullet")
+            }
+            
+            // Mapa de gasolineras
+            NavigationView {
+                StationMapView(viewModel: viewModel)
+            }
+            .tabItem {
+                Label("Mapa", systemImage: "map")
             }
         }
         .task {

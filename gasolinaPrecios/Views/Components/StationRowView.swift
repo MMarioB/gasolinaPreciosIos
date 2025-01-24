@@ -32,7 +32,11 @@ struct StationRowView: View {
     }
     
     var body: some View {
-        NavigationLink(destination: StationDetailView(station: station, userLocation: userLocation)) {
+        NavigationLink(destination: StationDetailView(
+            station: station,
+            userLocation: userLocation,
+            viewModel: viewModel
+        )) {
             VStack(spacing: 0) {
                 HStack(alignment: .top, spacing: 12) {
                     // Icono de estado
