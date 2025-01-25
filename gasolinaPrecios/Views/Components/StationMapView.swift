@@ -53,7 +53,7 @@ struct StationMapView: View {
                         .font(.title)
                         .foregroundColor(.blue)
                         .frame(width: 44, height: 44)
-                        .background(Color.white)
+                        .background(Color(uiColor: .systemBackground))
                         .clipShape(Circle())
                         .shadow(radius: 3)
                 }
@@ -66,7 +66,7 @@ struct StationMapView: View {
                         .font(.title)
                         .foregroundColor(.blue)
                         .frame(width: 44, height: 44)
-                        .background(Color.white)
+                        .background(Color(uiColor: .systemBackground))
                         .clipShape(Circle())
                         .shadow(radius: 3)
                 }
@@ -133,7 +133,7 @@ struct StationMapMarker: View {
             Text(station.getPrice(for: fuelType))
                 .font(.caption)
                 .padding(4)
-                .background(.white)
+                .background(Color(uiColor: .systemBackground))
                 .cornerRadius(4)
                 .shadow(radius: 1)
             
@@ -193,7 +193,7 @@ struct StationPreviewCard: View {
                 }
             }
             .padding()
-            .background(Color(UIColor.systemBackground))
+            .background(Color(uiColor: .systemBackground).opacity(0.95))
             .cornerRadius(12)
             .shadow(radius: 5)
             .padding()

@@ -26,11 +26,6 @@ struct SplashScreenView: View {
                             .scaledToFit()
                             .frame(width: 100, height: 100)
                             .foregroundColor(.white)
-                        
-                        Text("GasPrice")
-                            .font(.largeTitle)
-                            .foregroundColor(.white)
-                            .padding(.top)
                     }
                 }
             }

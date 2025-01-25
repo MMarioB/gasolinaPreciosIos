@@ -9,10 +9,12 @@ class MainViewModel: ObservableObject {
     @Published var error: String?
     @Published var selectedFuelType: FuelType = .dieselA
     @Published var averagePrices: [FuelType: Double] = [:]
+    @Published var isFirstLoad = true
+    @Published var searchRadius: Double = 5.0  // Empezamos con 5km
+    @Published var showAllStations = false     // Empezamos mostrando solo cercanas
     
     let locationManager: LocationManager
     
-    // Cache para el filtrado
     private var lastSearchText = ""
     private var lastFilteredStations: [GasStation] = []
     
@@ -21,41 +23,29 @@ class MainViewModel: ObservableObject {
     }
     
     var filteredStations: [GasStation] {
-        if searchText == lastSearchText {
-            return lastFilteredStations
-        }
-        
-        lastSearchText = searchText
-        
-        guard !searchText.isEmpty else {
-            lastFilteredStations = stations
-            return stations
-        }
-        
-        let searchTerms = searchText.lowercased().split(separator: " ")
-        lastFilteredStations = stations.filter { station in
-            let searchableText = "\(station.address) \(station.municipality) \(station.location)".lowercased()
-            return searchTerms.allSatisfy { term in
-                searchableText.contains(term)
+            print("🔍 Filtering stations:")
+            print("- Total stations: \(stations.count)")
+            print("- Search text: \(searchText)")
+            print("- Is first load: \(isFirstLoad)")
+            print("- Has location: \(locationManager.location != nil)")
+            print("- Show all stations: \(showAllStations)")
+            print("- Search radius: \(searchRadius)km")
+            
+            // Si hay búsqueda, filtrar por texto
+            if !searchText.isEmpty {
+                let filtered = stations.filter { station in
+                    let searchableText = "\(station.address) \(station.municipality) \(station.location)".lowercased()
+                    return searchText.lowercased().split(separator: " ").allSatisfy { term in
+                        searchableText.contains(term)
+                    }
+                }
+                print("- Filtered by search: \(filtered.count) stations")
+                return filtered
             }
-        }
-        
-        return lastFilteredStations
-    }
-    
-    func fetchStations() async {
-        isLoading = true
-        error = nil
-        
-        do {
-            let allStations = try await NetworkService.shared.fetchAllStations()
             
-            // Calcular precios medios para cada tipo de combustible
-            calculateAveragePrices(for: allStations)
-            
-            // Ordenar por distancia si tenemos ubicación
+            // Al inicio, mostrar todas las estaciones ordenadas por distancia
             if let userLocation = locationManager.location {
-                self.stations = allStations.sorted { station1, station2 in
+                let sortedStations = stations.sorted { station1, station2 in
                     guard let location1 = station1.coordinates,
                           let location2 = station2.coordinates else {
                         return false
@@ -73,15 +63,48 @@ class MainViewModel: ObservableObject {
                     
                     return distance1 < distance2
                 }
-            } else {
-                self.stations = allStations
+                
+                // Si no estamos mostrando todas, filtrar por radio
+                if !showAllStations {
+                    let filtered = sortedStations.filter { station in
+                        guard let coordinates = station.coordinates else { return false }
+                        let distance = userLocation.distance(from: CLLocation(
+                            latitude: coordinates.latitude,
+                            longitude: coordinates.longitude
+                        )) / 1000
+                        return distance <= searchRadius
+                    }
+                    
+                    print("- Filtered by distance (\(searchRadius)km): \(filtered.count) stations")
+                    return filtered.isEmpty ? sortedStations : filtered
+                }
+                
+                print("- Showing all stations sorted by distance: \(sortedStations.count)")
+                return sortedStations
             }
-        } catch {
-            self.error = error.localizedDescription
+            
+            print("- Showing all stations unsorted: \(stations.count)")
+            return stations
         }
         
-        isLoading = false
-    }
+        func fetchStations() async {
+            print("📡 Fetching stations...")
+            isLoading = true
+            error = nil
+            
+            do {
+                let allStations = try await NetworkService.shared.fetchAllStations()
+                print("✅ Fetched \(allStations.count) stations")
+                self.stations = allStations
+                calculateAveragePrices(for: allStations)
+                isFirstLoad = false
+            } catch {
+                self.error = error.localizedDescription
+                print("❌ Error fetching stations: \(error.localizedDescription)")
+            }
+            
+            isLoading = false
+        }
     
     private func calculateAveragePrices(for stations: [GasStation]) {
         for fuelType in FuelType.allCases {
@@ -107,14 +130,14 @@ class MainViewModel: ObservableObject {
         }
         
         let difference = priceValue - averagePrice
-        let threshold = averagePrice * 0.02 // 2% de diferencia
+        let threshold = averagePrice * 0.02
         
         if difference <= -threshold {
-            return .green // Más barato que la media
+            return .green
         } else if difference >= threshold {
-            return .red // Más caro que la media
+            return .red
         } else {
-            return .primary // Precio cercano a la media
+            return .primary
         }
     }
     
@@ -122,8 +145,6 @@ class MainViewModel: ObservableObject {
         if schedule.contains("24H") {
             return (true, "Abierto 24h")
         }
-        
-        // Aquí podríamos añadir más lógica para parsear otros formatos de horario
         return (true, schedule)
     }
 }

@@ -1,10 +1,3 @@
-//
-//  SingleStationMapView.swift
-//  gasolinaPrecios
-//
-//  Created by Mario Bravo on 24/1/25.
-//
-
 import SwiftUI
 import MapKit
 
@@ -42,7 +35,7 @@ struct SingleStationMapView: View {
                             Text(station.getPrice(for: .dieselA))
                                 .font(.caption)
                                 .padding(4)
-                                .background(.white)
+                                .background(Color(uiColor: .systemBackground))
                                 .cornerRadius(4)
                                 .shadow(radius: 1)
                         }
@@ -58,7 +51,7 @@ struct SingleStationMapView: View {
                         .font(.title2)
                         .foregroundColor(.blue)
                         .frame(width: 44, height: 44)
-                        .background(Color.white)
+                        .background(Color(uiColor: .systemBackground))
                         .clipShape(Circle())
                         .shadow(radius: 3)
                 }
